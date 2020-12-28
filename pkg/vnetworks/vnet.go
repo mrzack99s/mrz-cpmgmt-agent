@@ -63,15 +63,11 @@ func RemoveVnet(vnet_id string) (string, bool) {
 				}
 			}
 
-			fmt.Println("gggg")
-
 			cmd := fmt.Sprintf("rm -rf %s", cni.CNIConfDir+"/"+vnet_id)
 			err := exec.Command("sh", "-c", cmd).Run()
 			if err != nil {
 				log.Fatal(err)
 			}
-
-			fmt.Println("yyyy")
 
 			return "success", true
 		}

@@ -105,9 +105,7 @@ func (rb *RootfsBuilder) RootfsInitiator() string {
 		}
 
 		//CreateDisk
-		fmt.Println(rb.DiskSize)
 		diskSize, _ := strconv.Atoi(rb.DiskSize)
-		fmt.Println(diskSize * D1G)
 		cmd = fmt.Sprintf("truncate -s %sMB %s/image.ext4; mkfs.ext4 %s/image.ext4",
 			strconv.Itoa(diskSize*D1G), buildPathImage, buildPathImage)
 		err = exec.Command("sh", "-c", cmd).Run()

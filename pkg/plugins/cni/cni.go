@@ -7,37 +7,41 @@ import (
 	"os"
 	"path"
 
+	"github.com/mrzack99s/mrz-cpmgmt-agent/pkg/constants"
 	"github.com/mrzack99s/mrz-cpmgmt-agent/pkg/utils"
 )
 
 func GenerateConfiguration(id string, ipcidr string) (string, error) {
 	var cniConf = fmt.Sprintf(`{
-		"cniVersion": "0.4.0",
-		"name": "%s",
-		"plugins": [
-		  {
-			"type": "bridge",
-			"bridge": "%s",
-			"ipMasq": true,
-			"isGateway": true,
-			"isDefaultGateway": true,
-			"ipam": {
-			  "type": "host-local",
-			  "subnet": "%s",
-			  "resolvConf": "/etc/cni/net.d/resolv.conf"
-			},
-			"dns": {
-				"nameservers": [ "8.8.8.8", "8.8.4.4" ]
-			}
-		  },
-		  {
-			"type": "firewall"
-		  },
-		  {
-			"type": "tc-redirect-tap"
-		  }
-		]
-	  }`, id, id, ipcidr)
+    "cniVersion": "0.4.0",
+    "name": "%s",
+    "plugins": [
+        {
+            "type": "bridge",
+            "bridge": "%s",
+            "ipMasq": true,
+            "isGateway": true,
+            "isDefaultGateway": true,
+            "ipam": {
+                "type": "host-local",
+                "subnet": "%s",
+                "resolvConf": "/etc/cni/net.d/resolv.conf"
+            },
+            "dns": {
+                "nameservers": [
+                    "8.8.8.8",
+                    "8.8.4.4"
+                ]
+            }
+        },
+        {
+            "type": "firewall"
+        },
+        {
+            "type": "tc-redirect-tap"
+        }
+    ]
+}`, id, id, ipcidr)
 	if !utils.DirExists(CNIConfDir + "/" + id) {
 		cniPathKernel := CNIConfDir + "/" + id
 		// Main path kernel
@@ -54,6 +58,66 @@ func GenerateConfiguration(id string, ipcidr string) (string, error) {
 
 	if !utils.FileExists(fmt.Sprintf("%s/%s/cni.conflist", CNIConfDir, id)) {
 		err := ioutil.WriteFile(path.Join(CNIConfDir, fmt.Sprintf("/%s/cni.conflist", id)), []byte(cniConf), 0755)
+		if err != nil {
+			return "", err
+		}
+
+	}
+	return cniConf, nil
+}
+
+func GenerateConfigurationWithIp(vnet_id string, vnic_id string, ipcidr string, ipnet string) (string, error) {
+	var cniConf = fmt.Sprintf(`{
+    "cniVersion": "0.4.0",
+    "name": "%s",
+    "plugins": [
+        {
+            "type": "bridge",
+            "bridge": "%s",
+            "ipMasq": true,
+            "isGateway": true,
+            "isDefaultGateway": true,
+            "args":{  
+                "cni":{  
+                   "ips": ["%s"]
+                }
+             },
+            "ipam": {
+                "type": "static",
+                "subnet": "%s",
+                "resolvConf": "/etc/cni/net.d/resolv.conf"
+            },
+            "dns": {
+                "nameservers": [
+                    "8.8.8.8",
+                    "8.8.4.4"
+                ]
+            }
+        },
+        {
+            "type": "firewall"
+        },
+        {
+            "type": "tc-redirect-tap"
+        }
+    ]
+}`, vnet_id, vnet_id, ipnet, ipcidr)
+	cniPathKernel := constants.R_PATH + "/vm-" + vnic_id + "/cni"
+	if !utils.DirExists(cniPathKernel) {
+		// Main path kernel
+		err := os.Mkdir(cniPathKernel, 0755)
+		if err != nil {
+			log.Fatal(err)
+			return "exist cni path", err
+		}
+	}
+
+	if !utils.FileExists("/etc/cni/net.d/resolv.conf") {
+		ioutil.WriteFile("/etc/cni/net.d/resolv.conf", []byte("nameserver 8.8.8.8"), 0644)
+	}
+
+	if !utils.FileExists(fmt.Sprintf("%s/cni.conflist", cniPathKernel)) {
+		err := ioutil.WriteFile(fmt.Sprintf("%s/cni.conflist", cniPathKernel), []byte(cniConf), 0755)
 		if err != nil {
 			return "", err
 		}

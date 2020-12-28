@@ -1,9 +1,5 @@
 package instances
 
-import (
-	"github.com/mrzack99s/mrz-cpmgmt-agent/pkg/vnetworks"
-)
-
 func ReInstance(instance_id string) (*Machine, string) {
 
 	if CheckExistInstance(instance_id) {
@@ -20,12 +16,10 @@ func ReInstance(instance_id string) (*Machine, string) {
 			}
 
 			delete(InstanceLists, oldMachine.ID)
-
-			vnetworks.VnetNICLists[machine.Vnet.ID] = append(vnetworks.VnetNICLists[machine.Vnet.ID], machine.Vnic)
 			InstanceLists[machine.ID] = &machine
 			return &machine, "success"
 		}
-		return nil, "machine is down"
+		return nil, "machine is up"
 	} else {
 		return nil, "not have instance"
 	}

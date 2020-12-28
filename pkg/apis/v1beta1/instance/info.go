@@ -1,6 +1,7 @@
 package apis
 
 import (
+	"net"
 	"net/http"
 	"strconv"
 
@@ -15,12 +16,12 @@ func GetInstanceInfo(c *gin.Context) {
 	if instances.CheckExistInstance(instance_id) {
 
 		machine := instances.InstanceLists[instance_id]
-
+		parseIp, _, _ := net.ParseCIDR(machine.Vnic.IPNetCIDR)
 		c.JSON(http.StatusOK, gin.H{
 			"status":      true,
 			"instance_id": machine.ID,
 			"vnet_id":     machine.Vnet.ID,
-			"ip_addr":     machine.IPAddress,
+			"ip_addr":     parseIp,
 			"os_distro":   machine.OsSpec.OS.Distro,
 			"os_version":  machine.OsSpec.OS.Version,
 			"os_kernel":   machine.OsSpec.OS.Kernel,

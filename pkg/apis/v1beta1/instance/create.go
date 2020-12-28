@@ -1,6 +1,7 @@
 package apis
 
 import (
+	"net"
 	"net/http"
 	"strconv"
 
@@ -92,12 +93,13 @@ func CreateInstance(c *gin.Context) {
 		chanIpAddr := make(chan string)
 		go machine.StartInstance(chanIpAddr)
 		ipAddr := <-chanIpAddr
-		machine.IPAddress = ipAddr
+		machine.Vnic.IPNetCIDR = ipAddr
+		parseIp, _, _ := net.ParseCIDR(ipAddr)
 		c.JSON(http.StatusOK, gin.H{
 			"status":      true,
 			"instance_id": id,
 			"vnet_id":     machine.Vnet.ID,
-			"ip_addr":     ipAddr,
+			"ip_addr":     parseIp,
 			"os_distro":   os_image.Distro,
 			"os_version":  os_image.Version,
 			"os_kernel":   os_image.Kernel,

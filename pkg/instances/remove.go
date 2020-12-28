@@ -19,8 +19,7 @@ func (r *RemoveInstance) Remove() string {
 	if err := machine.MachineState.StopVMM(); err != nil {
 	}
 
-	nicIndex := vnetworks.FindVnetNICListsElement(machine.Vnet.ID, machine.Vnic)
-	vnetworks.VnetNICLists[machine.Vnet.ID] = vnetworks.RemoveVnetNICLists(vnetworks.VnetNICLists[machine.Vnet.ID], nicIndex)
+	delete(vnetworks.VnetNICLists[machine.Vnet.ID], machine.Vnic.ID)
 	delete(InstanceLists, machine.ID)
 
 	cmd := fmt.Sprintf("rm -rf %s", constants.R_PATH+"/"+r.InstanceID)
