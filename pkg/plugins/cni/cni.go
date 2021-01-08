@@ -21,7 +21,6 @@ func GenerateConfiguration(id string, ipcidr string) (string, error) {
             "bridge": "%s",
             "ipMasq": true,
             "isGateway": true,
-            "isDefaultGateway": true,
             "ipam": {
                 "type": "host-local",
                 "subnet": "%s",
@@ -76,7 +75,6 @@ func GenerateConfigurationWithIp(vnet_id string, vnic_id string, ipcidr string, 
             "bridge": "%s",
             "ipMasq": true,
             "isGateway": true,
-            "isDefaultGateway": true,
             "args":{  
                 "cni":{  
                    "ips": ["%s"]

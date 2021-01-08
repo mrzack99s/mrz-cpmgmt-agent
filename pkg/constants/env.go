@@ -12,7 +12,4 @@ const (
 
 	// Images temporary
 	TEMP_IMG_PATH = "/tmp/mrz-cpmgmt"
-
-	// Gateway interface (NAT)
-	GW_INT = "wlp0s20f3"
 )

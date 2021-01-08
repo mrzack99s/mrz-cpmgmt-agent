@@ -23,8 +23,31 @@ type Machine struct {
 	Status       string
 }
 
+func (m *Machine) getConfigWithStaticNet() firecracker.Config {
+	//addr, netIp, _ := net.ParseCIDR(m.Vnic.IPNetCIDR)
+	nics := m.Vnic.GetStaticNICConfiguration()
+	kernelArgs := fmt.Sprintf("console=ttyS0 reboot=k panic=1 pci=off eth0:on")
+
+	fcCfg := firecracker.Config{
+		SocketPath:      constants.R_PATH + "/vm-" + m.ID + "/api.socket",
+		KernelImagePath: constants.R_PATH + "/vm-" + m.ID + "/kernel/vmlinux",
+		KernelArgs:      kernelArgs,
+		Drives:          firecracker.NewDrivesBuilder(constants.R_PATH + "/vm-" + m.ID + "/image/image.ext4").Build(),
+		LogLevel:        "Info",
+		MachineCfg: models.MachineConfiguration{
+			VcpuCount:  firecracker.Int64(m.Spec.Vcpu),
+			HtEnabled:  firecracker.Bool(m.Spec.HtEnabled),
+			MemSizeMib: firecracker.Int64(m.Spec.MemSizeMib),
+		},
+		NetworkInterfaces: nics,
+		VMID:              m.ID,
+	}
+
+	return fcCfg
+}
+
 func (m *Machine) getConfig() firecracker.Config {
-	nics := m.Vnic.GetNICConfiguration(m.ID)
+	nics := m.Vnic.GetNICConfiguration()
 	fcCfg := firecracker.Config{
 		SocketPath:      constants.R_PATH + "/vm-" + m.ID + "/api.socket",
 		KernelImagePath: constants.R_PATH + "/vm-" + m.ID + "/kernel/vmlinux",
@@ -44,7 +67,7 @@ func (m *Machine) getConfig() firecracker.Config {
 }
 
 func (m *Machine) getConfigWithIP() firecracker.Config {
-	nics := m.Vnic.GetNICConfigurationWithIP(m.ID)
+	nics := m.Vnic.GetNICConfigurationWithIP()
 	fcCfg := firecracker.Config{
 		SocketPath:      constants.R_PATH + "/vm-" + m.ID + "/api.socket",
 		KernelImagePath: constants.R_PATH + "/vm-" + m.ID + "/kernel/vmlinux",
@@ -65,7 +88,8 @@ func (m *Machine) getConfigWithIP() firecracker.Config {
 
 func (m *Machine) StartInstance(chanIpAddr chan string) {
 
-	fcCfg := m.getConfig()
+	m.Vnic.CreateStaticInterface()
+	fcCfg := m.getConfigWithStaticNet()
 
 	// Check if kernel image is readable
 	f, err := os.Open(fcCfg.KernelImagePath)
@@ -99,9 +123,7 @@ func (m *Machine) StartInstance(chanIpAddr chan string) {
 		panic(err)
 	}
 	defer m.MachineState.StopVMM()
-	assignNic := make(map[string]*vnetworks.VNIC)
-	assignNic[m.Vnic.ID] = m.Vnic
-	vnetworks.VnetNICLists[m.Vnet.ID] = assignNic
+	vnetworks.VnetNICLists[m.Vnet.ID][m.Vnic.ID] = m.Vnic
 	staticConfig := m.MachineState.Cfg.NetworkInterfaces[0].StaticConfiguration
 	chanIpAddr <- staticConfig.IPConfiguration.IPAddr.String()
 	m.MachineState.Wait(vmmCtx)

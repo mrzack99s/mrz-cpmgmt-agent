@@ -1,0 +1,4 @@
+mrz_mpmgmt_agent:
+  config:
+    mode: prod
+    wan_link: wlp0s20f3
