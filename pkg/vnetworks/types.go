@@ -4,6 +4,7 @@ var VnetLists = []string{}
 var VnetIPCIDRLists = []string{}
 var VnetObjectsLists = make(map[string]*VNET)
 var VnetNICLists = make(map[string]map[string]*VNIC)
+var VnetPeeringLists = make(map[string]map[string]*VNET)
 
 func CountVnet() int {
 	return len(VnetLists)

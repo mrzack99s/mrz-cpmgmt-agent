@@ -43,14 +43,6 @@ func (rb *RootfsBuilder) RootfsInitiator() string {
 			return "exist main kernel path id"
 		}
 
-		cniPathKernel := constants.R_PATH + "/vm-" + rb.ID + "/cni"
-		// Main path kernel
-		err = os.Mkdir(cniPathKernel, 0755)
-		if err != nil {
-			log.Fatal(err)
-			return "exist main kernel path id"
-		}
-
 		// Main path image
 		mainPathImage := constants.R_PATH + "/vm-" + rb.ID + "/image"
 		err = os.Mkdir(mainPathImage, 0755)
@@ -124,8 +116,25 @@ func (rb *RootfsBuilder) RootfsInitiator() string {
 		}
 
 		//Add resolv.conf Unmount
-		cmd = fmt.Sprintf("echo \"nameserver 8.8.8.8\" > %s/rootfs/etc/resolv.conf; umount %s/rootfs",
-			buildPathImage, buildPathImage)
+		cmd = fmt.Sprintf("echo \"nameserver 8.8.8.8\" > %s/rootfs/etc/resolv.conf;",
+			buildPathImage)
+		err = exec.Command("sh", "-c", cmd).Run()
+		if err != nil {
+			log.Fatal(err)
+			return "cannot mount"
+		}
+
+		//Add Hostname
+		cmd = fmt.Sprintf("echo \"%s\" > %s/rootfs/etc/hostname; echo \"127.0.0.1 %s\" > %s/rootfs/etc/hosts;",
+			rb.ID, buildPathImage, rb.ID, buildPathImage)
+		err = exec.Command("sh", "-c", cmd).Run()
+		if err != nil {
+			log.Fatal(err)
+			return "cannot mount"
+		}
+
+		//Add resolv.conf Unmount
+		cmd = fmt.Sprintf("umount %s/rootfs", buildPathImage)
 		err = exec.Command("sh", "-c", cmd).Run()
 		if err != nil {
 			log.Fatal(err)
@@ -169,8 +178,10 @@ func (rb *RootfsBuilder) RootfsInitiator() string {
 			return "cannot remove"
 		}
 
+		return "success"
+
 	}
-	return "success"
+	return "failled"
 }
 
 func (rb *RootfsBuilder) checkInitiator() bool {

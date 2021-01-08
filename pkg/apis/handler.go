@@ -7,7 +7,7 @@ type APIHandler struct {
 }
 
 func (api *APIHandler) Serve() {
-	mode := gin.DebugMode
+	mode := gin.ReleaseMode
 	gin.SetMode(mode)
 	r := SetupRouter()
 	r.Run(api.Port)
